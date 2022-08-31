@@ -1,6 +1,8 @@
 package main
+
 import "fmt"
-func main(){
+
+func basic() {
 	//基本輸出: fmt.Println(data, data, ...)
 	fmt.Println(3)
 

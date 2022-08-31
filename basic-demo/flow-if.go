@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func main() {
+func flow() {
 	//基本語法
 	if true {
 		fmt.Println("Go")
