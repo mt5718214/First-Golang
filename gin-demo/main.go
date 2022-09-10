@@ -20,15 +20,6 @@ type User struct {
 	username, password string
 }
 
-const (
-	USERNAME = "demo"
-	PASSWORD = "demo123"
-	NETWORK  = "tcp"
-	SERVER   = "127.0.0.1"
-	PORT     = 3306
-	DATABASE = "golangtest"
-)
-
 func test(c *gin.Context) {
 	data := new(IndexData)
 	data.Title = "首頁"
@@ -101,7 +92,7 @@ func main() {
 	server := gin.Default()
 
 	// db connection
-	db, err := sql.Open("mysql", "root:password@/demo")
+	db, err := sql.Open("mysql", "demo:demo123@/demo")
 	if err != nil {
 		panic(err)
 	}
@@ -119,6 +110,16 @@ func main() {
 
 	insertUser(db, "user2", "password")
 	selectUser(db, "user2")
+
+	// use orm
+	userOrm := &UserORM{
+		Username: "test",
+		Password: "test",
+	}
+	CreateUser(OrmDb, userOrm)
+	fmt.Println(FindUser(OrmDb, 1))
+	fmt.Println(FindUsers(OrmDb, nil))
+	fmt.Println(FindUsers(OrmDb, "user2"))
 
 	// set the path to read HTML file
 	server.LoadHTMLGlob("template/html/*")
