@@ -70,7 +70,16 @@ func getTodoLists(c *gin.Context) {
 
 func getTodoList(c *gin.Context) {
 	id := c.Param("id")
-	fmt.Printf("list one todo, ID is: %v \n", id)
+	query := "SELECT title, content FROM todo WHERE id = ?"
+	row := db.QueryRow(query, id)
+
+	var todo PostTodoRequestBody
+	err := row.Scan(&todo.Title, &todo.Content)
+	if err != nil {
+		fmt.Println("get todo error", err.Error())
+	}
+
+	c.JSON(200, todo)
 }
 
 func postTodo(c *gin.Context) {
