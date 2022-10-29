@@ -13,6 +13,11 @@ var (
 	db *sql.DB
 )
 
+type PostTodoRequestBody struct {
+	Title   string
+	Content string
+}
+
 func main() {
 	server := gin.Default()
 
@@ -39,18 +44,28 @@ func main() {
 }
 
 func getTodoLists(c *gin.Context) {
-	query := "SELECT title FROM todo"
+	query := "SELECT title, content FROM todo"
 	rows, err := db.QueryContext(c, query)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
+	todos := make([]PostTodoRequestBody, 0)
 
-	if rows.Next() {
-		fmt.Println(rows.Columns())
+	for rows.Next() {
+		var todo PostTodoRequestBody
+		if err := rows.Scan(&todo.Title, &todo.Content); err != nil {
+			log.Fatal(err)
+		}
+		todos = append(todos, todo)
 	}
-	fmt.Println(rows)
-	fmt.Println("list all todos")
+
+	// Rows.Err will report the last error encountered by Rows.Scan.
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	c.JSON(200, todos)
 }
 
 func getTodoList(c *gin.Context) {
@@ -59,10 +74,6 @@ func getTodoList(c *gin.Context) {
 }
 
 func postTodo(c *gin.Context) {
-	type PostTodoRequestBody struct {
-		Title   string
-		Content string
-	}
 	var requestBody PostTodoRequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
 		log.Fatal("error", err)
