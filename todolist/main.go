@@ -87,6 +87,8 @@ func postTodo(c *gin.Context) {
 	if row, _ := result.RowsAffected(); row != 1 {
 		log.Fatal("insert todo data unmatched.")
 	}
+
+	c.JSON(201, nil)
 }
 
 func putTodo(c *gin.Context) {
