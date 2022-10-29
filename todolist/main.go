@@ -35,7 +35,7 @@ func main() {
 	server.GET("/todos", getTodoLists)
 	server.GET("/todos/:id", getTodoList)
 	server.POST("/todos", postTodo)
-	server.PUT("/todos", putTodo)
+	server.PUT("/todos/:id", putTodo)
 	server.DELETE("/todos/:id", deleteTodo)
 
 	// By default it serves on :8080 unless a PORT environment variable was defined.
@@ -101,7 +101,20 @@ func postTodo(c *gin.Context) {
 }
 
 func putTodo(c *gin.Context) {
-	fmt.Println("put a todo")
+	id := c.Param("id")
+	var requestBody PostTodoRequestBody
+	if err := c.BindJSON(&requestBody); err != nil {
+		log.Fatal("error", err)
+	}
+
+	// TODO: 修改更update邏輯, `title or content無值時會是空白字串`
+	query := "UPDATE todo SET title = IFNULL(?, title), content = IFNULL(?, content) WHERE id = ?"
+	_, err := db.Exec(query, requestBody.Title, requestBody.Content, id)
+	if err != nil {
+		fmt.Println("update todo err:", err.Error())
+	}
+
+	c.JSON(204, nil)
 }
 
 func deleteTodo(c *gin.Context) {
