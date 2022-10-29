@@ -18,7 +18,7 @@ func main() {
 
 	// db connection
 	var err error
-	db, err = sql.Open("mysql", "demo:demo123@tcp(localhost:3307)/demo")
+	db, err = sql.Open("mysql", "demo:demo123@tcp(localhost:3306)/demo")
 	if err != nil {
 		fmt.Println("DB連線資訊有誤請再次確認")
 	}
@@ -58,23 +58,24 @@ func getTodoList(c *gin.Context) {
 	fmt.Printf("list one todo, ID is: %v \n", id)
 }
 
-type EmailRequestBody struct {
-	Gin string
-}
-
 func postTodo(c *gin.Context) {
-	// var map = map[string]string
-	// err := c.Bind(&map)
-	var requestBody EmailRequestBody
+	type PostTodoRequestBody struct {
+		Title   string
+		Content string
+	}
+	var requestBody PostTodoRequestBody
 	if err := c.BindJSON(&requestBody); err != nil {
 		log.Fatal("error", err)
-		return
 	}
-	// body, _ := ioutil.ReadAll(c.Request.Body)
-	fmt.Println("body:", requestBody)
-	// query := "INSERT INTO todo (title, content, is_complete) VALUES (?, ?, ?)"
-	// db.Exec(query)
-	fmt.Println("post a todo")
+
+	query := "INSERT INTO todo (title, content, is_complete) VALUES (?, ?, 0)"
+	result, err := db.Exec(query, requestBody.Title, requestBody.Content)
+	if err != nil {
+		log.Fatal("insert todo err", err.Error())
+	}
+	if row, _ := result.RowsAffected(); row != 1 {
+		log.Fatal("insert todo data unmatched.")
+	}
 }
 
 func putTodo(c *gin.Context) {
