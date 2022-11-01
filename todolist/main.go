@@ -32,11 +32,14 @@ func main() {
 	}
 
 	// router
-	server.GET("/todos", getTodoLists)
-	server.GET("/todos/:id", getTodoList)
-	server.POST("/todos", postTodo)
-	server.PUT("/todos/:id", putTodo)
-	server.DELETE("/todos/:id", deleteTodo)
+	v1 := server.Group("/dev/api/v1")
+	{
+		v1.GET("/todos", getTodoLists)
+		v1.GET("/todos/:id", getTodoList)
+		v1.POST("/todos", postTodo)
+		v1.PUT("/todos/:id", putTodo)
+		v1.DELETE("/todos/:id", deleteTodo)
+	}
 
 	// By default it serves on :8080 unless a PORT environment variable was defined.
 	// router.Run(":3000") for a hard coded port
