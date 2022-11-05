@@ -12,6 +12,8 @@ func initRouter() *gin.Engine {
 	// router
 	v1 := server.Group("/dev/api/v1")
 	{
+		v1.POST("/login", api.Auth)
+
 		v1.GET("/todos", api.GetTodoLists)
 		v1.GET("/todos/:id", api.GetTodoList)
 		v1.POST("/todos", api.PostTodo)
