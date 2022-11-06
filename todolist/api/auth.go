@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	db "go-demo/todolist/database"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -77,6 +78,45 @@ func AuthHandler(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"token": token,
 	})
+}
+
+func JWTAuthMiddleware() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		// Get token from Header.Authorization field.
+		// same as c.Request.Header.Get("Authorization")
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Authorization is null in Header",
+			})
+			c.Abort()
+			return
+		}
+
+		part := strings.SplitN(authHeader, " ", 2)
+		if !(len(part) == 2 && part[0] == "Bearer") {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Format of Authorization is wrong",
+			})
+			c.Abort()
+			return
+		}
+
+		cm, err := ParseToken(part[1])
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "Invalid Token",
+			})
+			c.Abort()
+			return
+		}
+
+		// Store Account info into Context
+		// After that, we can get userId from c.Get("userId")
+		c.Set("userId", cm["jti"])
+
+		c.Next()
+	}
 }
 
 // 如果需要包含客製化使用者資訊的Claim可使用以下的struct
