@@ -11,6 +11,11 @@ import (
 	jwt "github.com/golang-jwt/jwt/v4"
 )
 
+var (
+	// Secret key
+	mySigningKey = []byte("mySigningKey")
+)
+
 type userInfoReqBody struct {
 	Username, Password, CheckPassword string
 }
@@ -73,14 +78,13 @@ func AuthHandler(c *gin.Context) {
 	})
 }
 
+// 如果需要包含客製化使用者資訊的Claim可使用以下的struct
 // type JWTClaim struct {
 // 	*jwt.RegisteredClaims
 // 	UserInfo interface{}
 // }
 
 func createJWT(sub string, userId int, username string) (string, error) {
-	// Secret key
-	mySigningKey := []byte("mySigningKey")
 	// Create the Claims
 	nowTime := time.Now()
 	expireTime := nowTime.Add(12 * time.Hour)
@@ -105,5 +109,36 @@ func createJWT(sub string, userId int, username string) (string, error) {
 	return ss, err
 }
 
-func ParseToken(c *gin.Context, token string) {
+func ParseToken(tokenString string) bool {
+	if strings.Trim(tokenString, " ") == "" {
+		return false
+	}
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		/**
+		* Comma-ok 斷言
+		* 可以直接判斷是否是該型別的變數： value, ok = element.(T)
+		* value 就是變數的值，ok 是一個 bool 型別，element 是 interface 變數，T 是斷言的型別。
+		* 如果 element 裡面確實儲存了 T 型別的數值，那麼 ok 回傳 true，否則回傳 false。
+		 */
+		// 驗證 alg 是否為預期的HMAC演算法
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return mySigningKey, nil
+	})
+
+	if err != nil {
+		fmt.Println("parse token error: ", err.Error())
+		return false
+	}
+
+	if claim, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		// fmt.Println("parsed token: ", token.Header, token.Signature, err)
+		fmt.Println("claim", claim)
+		return true
+	}
+
+	return false
 }
