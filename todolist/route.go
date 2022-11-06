@@ -12,7 +12,7 @@ func initRouter() *gin.Engine {
 	// router
 	v1 := server.Group("/dev/api/v1")
 	{
-		v1.POST("/login", api.Auth)
+		v1.POST("/login", api.AuthHandler)
 
 		v1.GET("/todos", api.GetTodoLists)
 		v1.GET("/todos/:id", api.GetTodoList)

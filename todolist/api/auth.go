@@ -20,7 +20,13 @@ type userInfo struct {
 	Username, Password string
 }
 
-func Auth(c *gin.Context) {
+// AuthHandler @Summary
+// @version 1.0
+// @produce application/json
+// @param register body Login true "login"
+// @Success 200 string successful return token
+// @Router /dev/api/v1/login [post]
+func AuthHandler(c *gin.Context) {
 	var userInfoReqBody userInfoReqBody
 	err := c.BindJSON(&userInfoReqBody)
 	if err != nil {
