@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	db "go-demo/todolist/database"
 	"strconv"
@@ -109,9 +110,9 @@ func createJWT(sub string, userId int, username string) (string, error) {
 	return ss, err
 }
 
-func ParseToken(tokenString string) bool {
+func ParseToken(tokenString string) (jwt.MapClaims, error) {
 	if strings.Trim(tokenString, " ") == "" {
-		return false
+		return nil, errors.New("invalid token")
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -131,14 +132,14 @@ func ParseToken(tokenString string) bool {
 
 	if err != nil {
 		fmt.Println("parse token error: ", err.Error())
-		return false
+		return nil, err
 	}
 
 	if claim, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		// fmt.Println("parsed token: ", token.Header, token.Signature, err)
 		fmt.Println("claim", claim)
-		return true
+		return claim, nil
 	}
 
-	return false
+	return nil, errors.New("invalid token")
 }
