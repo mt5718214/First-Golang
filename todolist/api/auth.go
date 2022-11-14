@@ -27,17 +27,13 @@ type userInfo struct {
 	Username, Password string
 }
 
-// AuthHandler @Summary
-// @version 1.0
-// @produce application/json
-// @param register body Login true "login"
-// @Success 200 string successful return token
-// @Router /dev/api/v1/login [post]
-func AuthHandler(c *gin.Context) {
+func RegisterHandler(c *gin.Context) {
 	var userInfoReqBody userInfoReqBody
 	err := c.BindJSON(&userInfoReqBody)
 	if err != nil {
 		fmt.Println("BindJSON error: ", err.Error())
+		c.JSON(400, nil)
+		return
 	}
 
 	username := strings.Trim(userInfoReqBody.Username, " ")
@@ -48,16 +44,71 @@ func AuthHandler(c *gin.Context) {
 		c.JSON(400, gin.H{
 			"message": "field can't be empty",
 		})
+		return
 	}
 
 	if password != checkPassword {
 		c.JSON(400, gin.H{
 			"message": "password and checkPassword is not equal",
 		})
+		return
 	}
 
-	row := db.SqlDB.QueryRow("SELECT id, username, password FROM users WHERE username = ?", username)
+	row := db.SqlDB.QueryRow("SELECT username FROM users WHERE username = ?", username)
 	var userInfo userInfo
+	err = row.Scan(&userInfo.Username)
+	if err != nil {
+		// hash password before insert
+		// ...
+
+		result, insertErr := db.SqlDB.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, password)
+		if insertErr != nil {
+			fmt.Println("Data insert error: ", insertErr.Error())
+			c.JSON(400, gin.H{
+				"messages": "Data insert error",
+			})
+			return
+		}
+
+		if affect, _ := result.RowsAffected(); affect != 1 {
+			fmt.Println("Data insert failed")
+			c.JSON(400, gin.H{
+				"messages": "Data insert failed",
+			})
+			return
+		}
+		c.JSON(200, gin.H{
+			"messages": "Create user success",
+		})
+		return
+	}
+
+	c.JSON(400, gin.H{
+		"message": "Username already exist",
+	})
+}
+
+func AuthHandler(c *gin.Context) {
+	var userInfo userInfo
+	err := c.BindJSON(&userInfo)
+	if err != nil {
+		fmt.Println("BindJSON error: ", err.Error())
+		c.JSON(400, nil)
+	}
+
+	username := strings.Trim(userInfo.Username, " ")
+	password := strings.Trim(userInfo.Password, " ")
+	if username == "" || password == "" {
+		c.JSON(400, gin.H{
+			"message": "field can't be empty",
+		})
+	}
+
+	// password hash
+	// ...
+
+	row := db.SqlDB.QueryRow("SELECT id, username FROM users WHERE username = ? and password = ?", username, password)
+	// var userInfo userInfo
 	err = row.Scan(&userInfo.Id, &userInfo.Username, &userInfo.Password)
 	if err != nil {
 		fmt.Println("QueryRow error: ", err.Error())

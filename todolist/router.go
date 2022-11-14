@@ -14,6 +14,7 @@ func initRouter() *gin.Engine {
 	v1 := server.Group("/dev/api/v1")
 	{
 		v1.POST("/login", api.AuthHandler)
+		v1.POST("/signup", api.RegisterHandler)
 
 		// The following routes will be authenticated
 		v1.Use(api.JWTAuthMiddleware())
