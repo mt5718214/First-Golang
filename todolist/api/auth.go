@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	db "go-demo/todolist/database"
+	"go-demo/todolist/util"
 	"net/http"
 	"strconv"
 	"strings"
@@ -59,9 +60,9 @@ func RegisterHandler(c *gin.Context) {
 	err = row.Scan(&userInfo.Username)
 	if err != nil {
 		// hash password before insert
-		// ...
+		hashString := util.HashPassword(password)
 
-		result, insertErr := db.SqlDB.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, password)
+		result, insertErr := db.SqlDB.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, hashString)
 		if insertErr != nil {
 			fmt.Println("Data insert error: ", insertErr.Error())
 			c.JSON(400, gin.H{
@@ -94,6 +95,7 @@ func AuthHandler(c *gin.Context) {
 	if err != nil {
 		fmt.Println("BindJSON error: ", err.Error())
 		c.JSON(400, nil)
+		return
 	}
 
 	username := strings.Trim(userInfo.Username, " ")
@@ -102,19 +104,26 @@ func AuthHandler(c *gin.Context) {
 		c.JSON(400, gin.H{
 			"message": "field can't be empty",
 		})
+		return
 	}
 
-	// password hash
-	// ...
-
-	row := db.SqlDB.QueryRow("SELECT id, username FROM users WHERE username = ? and password = ?", username, password)
-	// var userInfo userInfo
+	row := db.SqlDB.QueryRow("SELECT id, username, password FROM users WHERE username = ?", username)
 	err = row.Scan(&userInfo.Id, &userInfo.Username, &userInfo.Password)
 	if err != nil {
 		fmt.Println("QueryRow error: ", err.Error())
 		c.JSON(400, gin.H{
-			"message": "user is not exist",
+			"message": "Username or password is wrong.",
 		})
+		return
+	}
+
+	// check password hash string
+	isMatch := util.CheckPasswordHash(userInfo.Password, password)
+	if !isMatch {
+		c.JSON(400, gin.H{
+			"message": "Username or password is wrong.",
+		})
+		return
 	}
 
 	// sign JWT token and return to client
@@ -124,6 +133,7 @@ func AuthHandler(c *gin.Context) {
 		c.JSON(400, gin.H{
 			"token": "",
 		})
+		return
 	}
 
 	c.JSON(200, gin.H{
