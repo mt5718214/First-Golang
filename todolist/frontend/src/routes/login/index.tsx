@@ -1,4 +1,5 @@
 import { component$ } from '@builder.io/qwik';
+import { Link } from '@builder.io/qwik-city';
 // import { DocumentHead } from '@builder.io/qwik-city';
 
 export default component$(() => {
@@ -43,7 +44,7 @@ export default component$(() => {
 
         <div class="text-center mb-3">
           <p>
-            <router-link to="/signup">Sign Up</router-link>
+            <Link href="/signup">Sign Up</Link>
           </p>
         </div>
 
